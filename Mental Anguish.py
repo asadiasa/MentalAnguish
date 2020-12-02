@@ -102,7 +102,7 @@ def get_questions(file):
     """Open txt file to get questions"""
     with open(file, 'r') as fp:
         for line in fp:
-            line = line.strip(' ')
+            line = line.strip()
             yield line
 
 
@@ -114,37 +114,38 @@ def EmptyFieldError(Error):
 def save_question():
     """Save question and add to the question pool"""
     global question_list, question_text, choice_1, choice_2, choice_3, choice_4, \
-        c_feedback, i_feedback, c_choice, pts, lstbx, question_list, question_details, points_entry, edit_mode
+        c_feedback, i_feedback, c_choice, pts, lstbx, question_list, question_details, points_entry, edit_mode, edit_index
     valid_points = ['1', '2', '3']
+    points = str(pts.get().strip())
+    if points not in valid_points:
+        messagebox.showerror(title='Error', message='Point value must be between 1-3')
+    elif edit_mode:
+        question_list.pop(edit_index)
+        question_details.pop(edit_index)
+        lstbx.delete(edit_index)
+        edit_mode = False
     try:
-        if pts.get() not in valid_points:
-            raise EmptyFieldError
         temp_question = Question(question_text.get(), choice_1.get(), choice_2.get(), choice_3.get(), choice_4.get(),
                                  c_feedback.get(), i_feedback.get(), c_choice.get(), pts.get())
-    except TypeError:
-        messagebox.showerror(title='Incorrect Input', message='Please enter correct data in all fields')
-    except EmptyFieldError:
-        messagebox.showerror(title='Incorrect Input', message='Point value must be between (1-3)')
+    except ValueError:
+        messagebox.showerror(title='Incorrect Input', message='Please enter data in correct fields')
     else:
-        if edit_mode == True:
-            # TODO : Edit mode
-            pass
-        else:
-            question_list.append(temp_question.question_text)
-            question_details.append(temp_question)
-            with open('question_pool.txt', 'w') as fp:
-                for q in question_details:
-                    fp.write(str(q))
-            lstbx.insert(END, question_text.get())
-    toggle()
+        question_list.append(temp_question.new_question)
+        question_details.append(temp_question)
+        lstbx.insert(END, question_text.get())
+        with open('question_pool.txt', 'w') as fp:
+            for question in question_details:
+                fp.write(str(question)+('\n'))
 
 
 def edit_question(event):
     """Edit an existing question"""
     global question_list, question_text, choice_1, choice_2, choice_3, choice_4, \
-        c_feedback, i_feedback, c_choice, pts, lstbx, question_list, question_details, edit_mode
-    x = lstbx.curselection()[0]
-    temp = question_details[x]
+        c_feedback, i_feedback, c_choice, pts, lstbx, question_list, question_details, edit_mode, edit_index
+    edit_mode = True
+    edit_index = lstbx.curselection()[0]
+    print(edit_index)
+    temp = question_details[edit_index]
     question_text.set(temp.new_question)
     choice_1.set(temp.choice1)
     choice_2.set(temp.choice2)
@@ -157,8 +158,14 @@ def edit_question(event):
 
 
 def delete_question():
-    """Delete a question"""
-    pass
+    global edit_index, question_details, question_list, lstbx
+    edit_index = lstbx.curselection()[0]
+    question_details.pop(edit_index)
+    question_list.pop(edit_index)
+    lstbx.delete(edit_index)
+    with open('question_pool.txt', 'w') as fp:
+        for question in question_details:
+            fp.write(str(question)+'\n')
 
 
 def search_question():
@@ -167,12 +174,12 @@ def search_question():
 
 
 def take_quiz():
-    """Destroy edit window and allow user to play the game"""
-    global quiz_mode, window_heading, answer_choices
+    """Enter quiz mode and allow the user to play the game"""
+    global quiz_mode, window_heading, quiz_questions, quiz_question_count
     quiz_mode = True
-    window_heading.set('Mental Anguish')
-    win.geometry('600x400')
-    title_label.config(text='Quiz Game')
+    quiz_question_count = 0
+    window_heading.set('Quiz')
+    win.geometry('700x400')
     correct_label.grid_forget()
     correct_entry.grid_forget()
     incorrect_label.grid_forget()
@@ -195,6 +202,8 @@ def take_quiz():
     c_feedback.set(quiz_questions[0].correct_feedback)
     i_feedback.set(quiz_questions[0].incorrect_feedback)
     c_choice.set(quiz_questions[0].correct_answer)
+    quiz_question_count += 1
+
     question_entry.config(state=DISABLED)
     points_entry.config(state=DISABLED)
     choice1_entry.config(state=DISABLED)
@@ -207,7 +216,7 @@ def take_quiz():
 
 def check_answer():
     """Checks user's answer and assign points"""
-    global c_feedback, i_feedback, c_choice, user_answer, pts, player_score, entry_padding
+    global c_feedback, i_feedback, c_choice, pts, player_score, entry_padding, quiz_question_count
     user = user_answer.get()
     machine = c_choice.get()
     points = int(pts.get())
@@ -220,18 +229,51 @@ def check_answer():
     else:
         incorrect_label.grid(row=9, column=0, ipadx=10)
         incorrect_entry.grid(row=9, column=1, ipadx=entry_padding)
+    if quiz_question_count == 3:
+        save_button.config(state=DISABLED)
+        take_quiz_button.config(state=DISABLED)
+        messagebox.showinfo(title='You made it!', message=f'You scored {player_score} points')
+
     pb['value'] += 100
     print(player_score)
 
 
 def next_question():
     """Move to the next question"""
-    pass
+    global quiz_question_count, quiz_questions
+    correct_label.grid_forget()
+    correct_entry.grid_forget()
+    incorrect_label.grid_forget()
+    incorrect_entry.grid_forget()
+    user_answer.set('')
+
+    if quiz_question_count == 1:
+        question_text.set(quiz_questions[1].new_question)
+        pts.set(quiz_questions[1].points)
+        choice_1.set(quiz_questions[1].choice1)
+        choice_2.set(quiz_questions[1].choice2)
+        choice_3.set(quiz_questions[1].choice3)
+        choice_4.set(quiz_questions[1].choice4)
+        c_feedback.set(quiz_questions[1].correct_feedback)
+        i_feedback.set(quiz_questions[1].incorrect_feedback)
+        c_choice.set(quiz_questions[1].correct_answer)
+        quiz_question_count += 1
+    elif quiz_question_count == 2:
+        question_text.set(quiz_questions[2].new_question)
+        pts.set(quiz_questions[2].points)
+        choice_1.set(quiz_questions[2].choice1)
+        choice_2.set(quiz_questions[2].choice2)
+        choice_3.set(quiz_questions[2].choice3)
+        choice_4.set(quiz_questions[2].choice4)
+        c_feedback.set(quiz_questions[2].correct_feedback)
+        i_feedback.set(quiz_questions[2].incorrect_feedback)
+        c_choice.set(quiz_questions[2].correct_answer)
+        quiz_question_count += 1
 
 
 def toggle():
     """Clear all entry fields. Allows to switch between quiz mode and edit mode"""
-    global entry_padding, question_text, choice_1, choice_2, choice_3, choice_4, c_feedback, i_feedback, c_choice, pts
+    global entry_padding, question_text, choice_1, choice_2, choice_3, choice_4, c_feedback, i_feedback, c_choice, pts, edit_mode
     win.geometry('800x600')
     window_heading.set('Create Questions')
     question_text.set('')
@@ -243,49 +285,41 @@ def toggle():
     i_feedback.set('')
     c_choice.set('')
     pts.set('')
+    pb.grid_forget()
+    edit_mode = False
 
-    if edit_mode:
-        points_entry.config(state=NORMAL)
-        question_entry.config(state=NORMAL)
-        choice1_entry.config(state=NORMAL)
-        choice2_entry.config(state=NORMAL)
-        choice3_entry.config(state=NORMAL)
-        choice4_entry.config(state=NORMAL)
-        correct_entry.config(state=NORMAL)
-        incorrect_entry.config(state=NORMAL)
-        correct_choice_entry.config(state=NORMAL)
+    points_entry.config(state=NORMAL)
+    question_entry.config(state=NORMAL)
+    choice1_entry.config(state=NORMAL)
+    choice2_entry.config(state=NORMAL)
+    choice3_entry.config(state=NORMAL)
+    choice4_entry.config(state=NORMAL)
+    correct_entry.config(state=NORMAL)
+    incorrect_entry.config(state=NORMAL)
+    correct_choice_entry.config(state=NORMAL)
 
     correct_choice_label.grid(row=8, column=0, ipadx=10)
-    # correct_choice_entry = Entry(win, textvariable=c_choice)
     correct_choice_entry.grid(row=8, column=1, ipadx=entry_padding)
     correct_label.grid(row=9, column=0, ipadx=10)
-    # correct_entry = Entry(win, textvariable=c_feedback)
     correct_entry.grid(row=9, column=1, ipadx=entry_padding)
-    # incorrect_label = Label(win, text='Inorrect Feedback: ', bg=color, font='bold')
     incorrect_label.grid(row=10, column=0, ipadx=10)
-    # incorrect_entry = Entry(win, textvariable=i_feedback)
     incorrect_entry.grid(row=10, column=1, ipadx=entry_padding)
-    # correct_choice_label = Label(win, text='Correct Answer: ', bg=color, font='bold')
 
     cancel_button.grid(row=11, column=1, ipadx=20, pady=10, sticky=W)
     save_button.grid(row=11, column=1, pady=8, ipadx=30)
+    take_quiz_button.config(text='Take Quiz')
+    take_quiz_button.config(command=take_quiz)
     take_quiz_button.grid(row=11, column=1, ipadx=15, sticky=E)
 
     lstbx_label.grid(row=12, column=1, sticky=W)
     lstbx.grid(row=13, column=1, columnspan=3, pady=5, sticky=W, ipadx=30)
-    for q in question_list:
-        q = str(q)
-        lstbx.insert(END, q)
 
-    # search_entry.grid_forget()
-    # search_button.grid_forget()
-    # submit_button.grid_forget()
-    # points_earned_label.grid_forget()
-    # question_count.grid_forget()
-    # correct_questions.grid_forget()
-    # answer_entry.grid_forget()
-    # answer_label.grid_forget()
-    # next_question.grid_forget()
+
+def insert_lstbx():
+    global question_details, question_list
+    for question in question_list:
+        question = str(question)
+        lstbx.insert(END, question)
 
 
 # Build window called win
@@ -310,7 +344,10 @@ pts = StringVar()
 window_heading = StringVar()
 question_list = []
 question_details = []
-edit_mode = TRUE
+quiz_questions = []
+quiz_question_count = 0
+edit_mode = FALSE
+edit_index = 0
 quiz_mode = FALSE
 player_score = 0
 
@@ -415,18 +452,16 @@ question_pool = get_questions('question_pool.txt')
 for q in question_pool:
     # Comma split separates each part of a question and assigns it to temporary variable
     try:
-        (temp_q, temp_1, temp_2, temp_3, temp_4, temp_cfeedback, temp_ifeedback, temp_answer, temp_pts) = q.split(
-            ',')
-    except (TypeError, ValueError):
+        (temp_q, temp_1, temp_2, temp_3, temp_4, temp_cfeedback, temp_ifeedback, temp_answer, temp_pts) = q.split(',')
+    except TypeError:
         messagebox.showerror(title='Invalid Input', message='Please enter all required data')
-    # Add each question to the list of questions to be displayed to the user
-    question_list.append(temp_q)
-    question_item = Question(temp_q, temp_1, temp_2, temp_3, temp_4, temp_cfeedback, temp_ifeedback, temp_answer,
-                             temp_pts)
-    question_details.append(question_item)
+    else:
+        # Add each question to the list of questions to be displayed to the user
+        question_list.append(temp_q)
+        question_item = Question(temp_q, temp_1, temp_2, temp_3, temp_4, temp_cfeedback, temp_ifeedback, temp_answer,
+                                 temp_pts)
+        question_details.append(question_item)
 
-for q in question_list:
-    q = str(q)
-    lstbx.insert(END, q)
+insert_lstbx()
 
 win.mainloop()
