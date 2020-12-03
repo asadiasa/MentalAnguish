@@ -2,6 +2,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
+from difflib import get_close_matches
 import random
 
 
@@ -20,6 +21,7 @@ class Question:
         self.correct_feedback = correct_feedback
         self.incorrect_feedback = incorrect_feedback
         self.correct_answer = correct_ans
+        self.points = points
 
     @property  # format
     def new_question(self):
@@ -27,7 +29,7 @@ class Question:
 
     @new_question.setter  # validation
     def new_question(self, new_text):
-        self.__new_question = new_text
+        self.__new_question = new_text.strip()
 
     @property
     def choice1(self):
@@ -35,7 +37,7 @@ class Question:
 
     @choice1.setter
     def choice1(self, new_choice):
-        self.__choice1 = new_choice
+        self.__choice1 = new_choice.strip()
 
     @property
     def choice2(self):
@@ -43,7 +45,7 @@ class Question:
 
     @choice2.setter
     def choice2(self, new_choice):
-        self.__choice2 = new_choice
+        self.__choice2 = new_choice.strip()
 
     @property
     def choice3(self):
@@ -51,7 +53,7 @@ class Question:
 
     @choice3.setter
     def choice3(self, new_choice):
-        self.__choice3 = new_choice
+        self.__choice3 = new_choice.strip()
 
     @property
     def choice4(self):
@@ -59,7 +61,7 @@ class Question:
 
     @choice4.setter
     def choice4(self, new_choice):
-        self.__choice4 = new_choice
+        self.__choice4 = new_choice.strip()
 
     @property
     def correct_feedback(self):
@@ -67,7 +69,7 @@ class Question:
 
     @correct_feedback.setter
     def correct_feedback(self, new_feedback):
-        self.__correct_feedback = new_feedback
+        self.__correct_feedback = new_feedback.strip()
 
     @property
     def incorrect_feedback(self):
@@ -75,7 +77,7 @@ class Question:
 
     @incorrect_feedback.setter
     def incorrect_feedback(self, new_feedback):
-        self.__incorrect_feedback = new_feedback
+        self.__incorrect_feedback = new_feedback.strip()
 
     @property
     def correct_answer(self):
@@ -83,7 +85,7 @@ class Question:
 
     @correct_answer.setter
     def correct_answer(self, new_answer):
-        self.__correct_answer = new_answer
+        self.__correct_answer = new_answer.strip()
 
     @property
     def points(self):
@@ -115,15 +117,13 @@ def save_question():
     """Save question and add to the question pool"""
     global question_list, question_text, choice_1, choice_2, choice_3, choice_4, \
         c_feedback, i_feedback, c_choice, pts, lstbx, question_list, question_details, points_entry, edit_mode, edit_index
-    valid_points = ['1', '2', '3']
-    points = str(pts.get().strip())
-    if points not in valid_points:
-        messagebox.showerror(title='Error', message='Point value must be between 1-3')
-    elif edit_mode:
+
+    if edit_mode:
         question_list.pop(edit_index)
         question_details.pop(edit_index)
         lstbx.delete(edit_index)
         edit_mode = False
+
     try:
         temp_question = Question(question_text.get(), choice_1.get(), choice_2.get(), choice_3.get(), choice_4.get(),
                                  c_feedback.get(), i_feedback.get(), c_choice.get(), pts.get())
@@ -144,7 +144,6 @@ def edit_question(event):
         c_feedback, i_feedback, c_choice, pts, lstbx, question_list, question_details, edit_mode, edit_index
     edit_mode = True
     edit_index = lstbx.curselection()[0]
-    print(edit_index)
     temp = question_details[edit_index]
     question_text.set(temp.new_question)
     choice_1.set(temp.choice1)
@@ -159,27 +158,57 @@ def edit_question(event):
 
 def delete_question():
     global edit_index, question_details, question_list, lstbx
-    edit_index = lstbx.curselection()[0]
-    question_details.pop(edit_index)
-    question_list.pop(edit_index)
-    lstbx.delete(edit_index)
-    with open('question_pool.txt', 'w') as fp:
-        for question in question_details:
-            fp.write(str(question)+'\n')
+    if quiz_mode:
+        messagebox.showwarning(title='Sorry the questions are too hard for you :(', message="To delete a question: \nClick on 'View'")
+    else:
+        edit_index = lstbx.curselection()[0]
+        question_details.pop(edit_index)
+        question_list.pop(edit_index)
+        lstbx.delete(edit_index)
+        with open('question_pool.txt', 'w') as fp:
+            for question in question_details:
+                fp.write(str(question)+'\n')
 
 
 def search_question():
     """User has ability to search for a question"""
-    pass
+    # TODO: search for choices and feedback text
+    global question_list
+    questions = []
+    for q in question_list:
+        questions.append(str(q).casefold())
+    find = input('Search question: ').casefold()
+    print(get_close_matches(find, question_list, n=5, cutoff=0.5))
+
+
+def search():
+    """User has ability to search for choices and feedback"""
+    global question_details
+    search_list = []
+    for q in question_details:
+        search_list.append(q.choice1.casefold())
+        search_list.append(q.choice2.casefold())
+        search_list.append(q.choice3.casefold())
+        search_list.append(q.choice4.casefold())
+        search_list.append(q.correct_feedback.casefold())
+        search_list.append(q.incorrect_feedback.casefold())
+
+
+    find = input('Search question: ').casefold()
+    print(get_close_matches(find, search_list, n=3, cutoff=0.4))
 
 
 def take_quiz():
     """Enter quiz mode and allow the user to play the game"""
-    global quiz_mode, window_heading, quiz_questions, quiz_question_count
+    global quiz_mode, window_heading, quiz_questions, quiz_question_count, total_points
     quiz_mode = True
+    total_points = 0
     quiz_question_count = 0
     window_heading.set('Quiz')
     win.geometry('700x400')
+    c_choice.set('')
+    user_answer.set('')
+    pb['value'] = 0
     correct_label.grid_forget()
     correct_entry.grid_forget()
     incorrect_label.grid_forget()
@@ -203,6 +232,7 @@ def take_quiz():
     i_feedback.set(quiz_questions[0].incorrect_feedback)
     c_choice.set(quiz_questions[0].correct_answer)
     quiz_question_count += 1
+    total_points = int(quiz_questions[0].points)
 
     question_entry.config(state=DISABLED)
     points_entry.config(state=DISABLED)
@@ -216,31 +246,33 @@ def take_quiz():
 
 def check_answer():
     """Checks user's answer and assign points"""
-    global c_feedback, i_feedback, c_choice, pts, player_score, entry_padding, quiz_question_count
+    global c_feedback, i_feedback, c_choice, pts, player_score, entry_padding, quiz_question_count, total_points
     user = user_answer.get()
-    machine = c_choice.get()
+    user = user.strip()
+    user = user.casefold()
+    machine = c_choice.get().casefold()
     points = int(pts.get())
-    print(user)
-    print(machine)
-    if user.casefold() == machine.casefold():
-        player_score += points
-        correct_label.grid(row=9, column=0, ipadx=10)
-        correct_entry.grid(row=9, column=1, ipadx=entry_padding)
+    if user == "":
+        messagebox.showwarning(title="Hold on!", message="Type your answer in the 'Answer box before clicking 'Submit'")
     else:
-        incorrect_label.grid(row=9, column=0, ipadx=10)
-        incorrect_entry.grid(row=9, column=1, ipadx=entry_padding)
-    if quiz_question_count == 3:
-        save_button.config(state=DISABLED)
-        take_quiz_button.config(state=DISABLED)
-        messagebox.showinfo(title='You made it!', message=f'You scored {player_score} points')
+        if user == machine:
+            player_score += points
+            correct_label.grid(row=9, column=0, ipadx=10)
+            correct_entry.grid(row=9, column=1, ipadx=entry_padding)
+        else:
+            incorrect_label.grid(row=9, column=0, ipadx=10)
+            incorrect_entry.grid(row=9, column=1, ipadx=entry_padding)
+        if quiz_question_count == 3:
+            save_button.config(state=DISABLED)
+            take_quiz_button.config(state=DISABLED)
+            messagebox.showinfo(title="You made it!", message=f"You scored {player_score}/{total_points} points.\nTo play again, click 'File' then 'New Game'")
 
-    pb['value'] += 100
-    print(player_score)
+        pb['value'] += 100
 
 
 def next_question():
     """Move to the next question"""
-    global quiz_question_count, quiz_questions
+    global quiz_question_count, quiz_questions, total_points
     correct_label.grid_forget()
     correct_entry.grid_forget()
     incorrect_label.grid_forget()
@@ -258,6 +290,7 @@ def next_question():
         i_feedback.set(quiz_questions[1].incorrect_feedback)
         c_choice.set(quiz_questions[1].correct_answer)
         quiz_question_count += 1
+        total_points += int(quiz_questions[1].points)
     elif quiz_question_count == 2:
         question_text.set(quiz_questions[2].new_question)
         pts.set(quiz_questions[2].points)
@@ -269,11 +302,12 @@ def next_question():
         i_feedback.set(quiz_questions[2].incorrect_feedback)
         c_choice.set(quiz_questions[2].correct_answer)
         quiz_question_count += 1
+        total_points += int(quiz_questions[2].points)
 
 
 def toggle():
     """Clear all entry fields. Allows to switch between quiz mode and edit mode"""
-    global entry_padding, question_text, choice_1, choice_2, choice_3, choice_4, c_feedback, i_feedback, c_choice, pts, edit_mode
+    global entry_padding, question_text, choice_1, choice_2, choice_3, choice_4, c_feedback, i_feedback, c_choice, pts, edit_mode, quiz_mode
     win.geometry('800x600')
     window_heading.set('Create Questions')
     question_text.set('')
@@ -287,6 +321,7 @@ def toggle():
     pts.set('')
     pb.grid_forget()
     edit_mode = False
+    quiz_mode = False
 
     points_entry.config(state=NORMAL)
     question_entry.config(state=NORMAL)
@@ -296,8 +331,9 @@ def toggle():
     choice4_entry.config(state=NORMAL)
     correct_entry.config(state=NORMAL)
     incorrect_entry.config(state=NORMAL)
-    correct_choice_entry.config(state=NORMAL)
+    # correct_choice_entry.config(state=NORMAL)
 
+    user_choice_entry.grid_forget()
     correct_choice_label.grid(row=8, column=0, ipadx=10)
     correct_choice_entry.grid(row=8, column=1, ipadx=entry_padding)
     correct_label.grid(row=9, column=0, ipadx=10)
@@ -307,6 +343,7 @@ def toggle():
 
     cancel_button.grid(row=11, column=1, ipadx=20, pady=10, sticky=W)
     save_button.grid(row=11, column=1, pady=8, ipadx=30)
+    save_button.config(command=save_question)
     take_quiz_button.config(text='Take Quiz')
     take_quiz_button.config(command=take_quiz)
     take_quiz_button.grid(row=11, column=1, ipadx=15, sticky=E)
@@ -327,6 +364,7 @@ win = Tk()
 win.config(bg='linen')
 win.title('Mental Anguish')
 win.geometry('800x600')
+win.iconbitmap('az.ico')
 
 # Variables
 color = 'linen'
@@ -346,10 +384,11 @@ question_list = []
 question_details = []
 quiz_questions = []
 quiz_question_count = 0
-edit_mode = FALSE
+edit_mode = False
 edit_index = 0
-quiz_mode = FALSE
+quiz_mode = False
 player_score = 0
+total_points = 0
 
 # Menu System
 menu_bar = Menu(win)
@@ -362,8 +401,8 @@ edit_menu.add_command(label='Delete', command=delete_question)
 edit_menu.add_command(label='Search', command=search_question)
 
 file_menu = Menu(menu_bar, tearoff=False)
-file_menu.add_command(label='New')
-file_menu.add_command(label='Exit')
+file_menu.add_command(label='New Game', command=take_quiz)
+file_menu.add_command(label='Exit Application')
 
 menu_bar.add_cascade(label='File', menu=file_menu)
 menu_bar.add_cascade(label='Edit', menu=edit_menu)
@@ -372,6 +411,7 @@ menu_bar.add_cascade(label='Edit', menu=edit_menu)
 title_label = Label(win, textvariable=window_heading, bg=color, font='bold')
 window_heading.set('Create Questions')
 title_label.grid(row=0, column=1, pady=15)
+
 
 question_label = Label(win, text='Question: ', bg=color, font='bold')
 question_label.grid(row=2, column=0, ipadx=10)
@@ -438,15 +478,14 @@ cancel_button.grid(row=11, column=1, ipadx=20, pady=10, sticky=W)
 save_button = Button(win, command=save_question, text='Save', cursor='heart')
 save_button.grid(row=11, column=1, pady=8, ipadx=30)
 
+# Delete
+take_quiz_button = Button(win, command=take_quiz, text='Take Quiz', cursor='heart')
+take_quiz_button.grid(row=11, column=1, ipadx=15, sticky=E)
+
 # Progressbar
 pb = ttk.Progressbar(win, orient='horizontal', maximum=301, mode='determinate')
 pb.grid(row=12, column=1, ipadx=30)
 pb.grid_forget()
-
-# Take Quiz
-take_quiz_button = Button(win, command=take_quiz, text='Take Quiz', cursor='heart')
-take_quiz_button.grid(row=11, column=1, ipadx=15, sticky=E)
-
 
 question_pool = get_questions('question_pool.txt')
 for q in question_pool:
