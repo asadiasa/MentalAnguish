@@ -157,6 +157,7 @@ def edit_question(event):
 
 
 def delete_question():
+    """User can delete a question"""
     global edit_index, question_details, question_list, lstbx
     if quiz_mode:
         messagebox.showwarning(title='Sorry the questions are too hard for you :(', message="To delete a question: \nClick on 'View'")
@@ -170,22 +171,35 @@ def delete_question():
                 fp.write(str(question)+'\n')
 
 
-def search_question():
-    """User has ability to search for a question"""
-    # TODO: search for choices and feedback text
-    global question_list
-    questions = []
-    for q in question_list:
-        questions.append(str(q).casefold())
-    find = input('Search question: ').casefold()
-    print(get_close_matches(find, question_list, n=5, cutoff=0.5))
+def search_window():
+    """Toggle to search window"""
+    global search_results
+    edit_window()
+    window_heading.set('Search for a question, choice, or feedback')
+    question_text.set('')
+    choice_1.set('')
+    choice_2.set('')
+    choice_3.set('')
+    choice_4.set('')
+    c_feedback.set('')
+    i_feedback.set('')
+    lstbx_label.config(text='')
+    points_label.grid_forget()
+    points_entry.grid_forget()
+    correct_choice_label.grid_forget()
+    correct_choice_label.grid_forget()
+    correct_choice_entry.grid_forget()
+    lstbx.grid_forget()
+    save_button.config(command=search)
 
 
 def search():
     """User has ability to search for choices and feedback"""
-    global question_details
+    global question_details, search_list, search_results
     search_list = []
+    search_results = []
     for q in question_details:
+        search_list.append(q.new_question.casefold())
         search_list.append(q.choice1.casefold())
         search_list.append(q.choice2.casefold())
         search_list.append(q.choice3.casefold())
@@ -193,9 +207,33 @@ def search():
         search_list.append(q.correct_feedback.casefold())
         search_list.append(q.incorrect_feedback.casefold())
 
+    if question_text.get() != '':
+        find = question_text.get()
+        search_results = get_close_matches(find, search_list, n=3, cutoff=0.5)
+    if choice_1.get() != '':
+        find = choice_1.get()
+        search_results = get_close_matches(find, search_list, n=5, cutoff=0.4)
+    if choice_2.get() != '':
+        find = choice_2.get()
+        search_results = get_close_matches(find, search_list, n=5, cutoff=0.4)
+    if choice_3.get() != '':
+        find = choice_3.get()
+        search_results = get_close_matches(find, search_list, n=5, cutoff=0.4)
+    if choice_4.get() != '':
+        find = choice_4.get()
+        search_results = get_close_matches(find, search_list, n=5, cutoff=0.4)
+    if c_feedback.get() != '':
+        find = c_feedback.get()
+        search_results = get_close_matches(find, search_list, n=3, cutoff=0.5)
+    if i_feedback.get() != '':
+        find = i_feedback.get()
+        search_results = get_close_matches(find, search_list, n=3, cutoff=0.5)
 
-    find = input('Search question: ').casefold()
-    print(get_close_matches(find, search_list, n=3, cutoff=0.4))
+    for result in search_results:
+        result_box.insert(END, result)
+    lstbx_label.config(text='Results')
+    result_box.grid(row=13, column=1, columnspan=3, pady=5, sticky=W, ipadx=30)
+    search_results = []
 
 
 def take_quiz():
@@ -305,7 +343,7 @@ def next_question():
         total_points += int(quiz_questions[2].points)
 
 
-def toggle():
+def edit_window():
     """Clear all entry fields. Allows to switch between quiz mode and edit mode"""
     global entry_padding, question_text, choice_1, choice_2, choice_3, choice_4, c_feedback, i_feedback, c_choice, pts, edit_mode, quiz_mode
     win.geometry('800x600')
@@ -383,6 +421,8 @@ window_heading = StringVar()
 question_list = []
 question_details = []
 quiz_questions = []
+search_list = []
+search_results = []
 quiz_question_count = 0
 edit_mode = False
 edit_index = 0
@@ -394,11 +434,11 @@ total_points = 0
 menu_bar = Menu(win)
 win.config(menu=menu_bar)
 edit_menu = Menu(menu_bar, tearoff=False)
-edit_menu.add_command(label='View', command=toggle)
-edit_menu.add_command(label='Edit', command=toggle)
-edit_menu.add_command(label='Add', command=toggle)
+edit_menu.add_command(label='View', command=edit_window)
+edit_menu.add_command(label='Edit', command=edit_window)
+edit_menu.add_command(label='Add', command=edit_window)
 edit_menu.add_command(label='Delete', command=delete_question)
-edit_menu.add_command(label='Search', command=search_question)
+edit_menu.add_command(label='Search', command=search_window)
 
 file_menu = Menu(menu_bar, tearoff=False)
 file_menu.add_command(label='New Game', command=take_quiz)
@@ -469,16 +509,20 @@ lstbx_label.grid(row=12, column=1, sticky=W)
 lstbx.bind("<Double-Button-1>", edit_question)
 lstbx.grid(row=13, column=1, columnspan=3, pady=5, sticky=W, ipadx=30)
 
+# Results box
+result_box = Listbox(win, width=60)
+result_box.grid(row=13, column=1, columnspan=3, pady=5, sticky=W, ipadx=30)
+result_box.grid_forget()
 
 # Clear Button
-cancel_button = Button(win, command=toggle, text='Clear', cursor='heart')
+cancel_button = Button(win, command=edit_window, text='Clear', cursor='heart')
 cancel_button.grid(row=11, column=1, ipadx=20, pady=10, sticky=W)
 
 # Save Button
 save_button = Button(win, command=save_question, text='Save', cursor='heart')
 save_button.grid(row=11, column=1, pady=8, ipadx=30)
 
-# Delete
+# Take quiz
 take_quiz_button = Button(win, command=take_quiz, text='Take Quiz', cursor='heart')
 take_quiz_button.grid(row=11, column=1, ipadx=15, sticky=E)
 
@@ -502,5 +546,4 @@ for q in question_pool:
         question_details.append(question_item)
 
 insert_lstbx()
-
 win.mainloop()
