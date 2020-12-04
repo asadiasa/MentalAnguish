@@ -1,10 +1,11 @@
-What date did Aaron asked Cady out in the movie Mean Girls?,  Oct 3, Nov 11, Sept 24,  Dec 10, You go Glen Coco!, None for you Gretchen Weiners!,Oct 3,1
-Where is the NASA Jet Propulsion Laboratory located?,  Miami FL, Cleveland Ohio, Phoenix AZ,  Pasadena CA, You're on the way to the moon!, Not like its rocket science,Pasdena CA,3
-Which continent is the Philippines located in?,  Europe, Asia, South America,     Africa, You are a globe trotter!, Go back to 3rd grade,Asia,1
-Where does the majority of Twilight take place?,  Phoenix AZ, Forks WA, Mystic Falls VA,  Portland OR, You have great taste in movies!, This is common knowledge,Forks WA,2
-Which school is #1 in innovation?,  ASU,NAU, USC,  UofArizona, Big brain energy, Your brain is so smooth,ASU,2
-What is the first color of the rainbow?,  Red, Orange, Yellow,   Green, Good job for knowing the bare minimum, I'll assume you haven't seen a rainbow in a while,Red,1
-Complete the popular saying: I ain't never seen two pretty _______,  Houses, Hamburgers, Best Friends,  Flowers, Ok now get off Tik Tok and do your CIS 345, You're the ugly best friend,Best Friend,1
-What year is it?,  2020,2021, 1920,  2019,Good to know one of us still has a perception of time, I wish it wasn't 2020,2020,1
-Which shape has no corners?,  Rectangle, Square, Circle,  Triangle,I just need another question to pass this project,I am not mentally present as well,Circle,3
-Which Disney movies has the most songs?,  Peter Pan, Ratatouille, Alice in Wonderland,  Cinderalla,You deserve a trip to Disneyland!, Somebody didn't have a childhood,Alice in Wonderland,2
+Where is the NASA Jet Propulsion Laboratory located?, Miami FL,Cleveland Ohio,Phoenix AZ, Pasadena CA,You're on the way to the moon!,Not like its rocket science,Pasdena CA,3
+Which continent is the Philippines located in?, Europe,Asia,South America, Africa,You are a globe trotter!,Go back to 3rd grade,Asia,1
+Where does the majority of Twilight take place?, Phoenix AZ,Forks WA,Mystic Falls VA, Portland OR,You have great taste in movies!,This is common knowledge,Forks WA,2
+Which school is #1 in innovation?, ASU,NAU,USC, UofArizona,Big brain energy,Your brain is so smooth,ASU,2
+What is the first color of the rainbow?, Red,Orange,Yellow, Green,Good job for knowing the bare minimum,I'll assume you haven't seen a rainbow in a while,Red,1
+Complete the popular saying: I ain't never seen two pretty _______, Houses,Hamburgers,Best Friends, Flowers,Ok now get off Tik Tok and do your CIS 345,You're the ugly best friend,Best Friends,1
+What year is it?, 2020,2021,1920, 2019,Good to know one of us still has a perception of time,I wish it wasn't 2020,2020,1
+Which shape has no corners?, Rectangle,Square,Circle, Triangle,I just need another question to pass this project,I am not mentally present as well,Circle,3
+Which Disney movies has the most songs?, Peter Pan,Ratatouille,Alice in Wonderland, Cinderalla,You deserve a trip to Disneyland!,Somebody didn't have a childhood,Alice in Wonderland,2
+What date did Aaron asked Cady out in the movie Mean Girls?, Oct 3,Nov 11,Sept 24, Dec 10,You go Glen Coco!,None for you Gretchen Weiners!,Oct 3,1
+Where does Santa Claus live?, The sixth floor of the BAC building,North Pole,The Taco Bell on Rural and Apache, Tempe Town Lake,Yay!,:(      <-- (does this count as a graphic?),North Pole,2

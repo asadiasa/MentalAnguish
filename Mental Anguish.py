@@ -174,6 +174,10 @@ def delete_question():
 def search_window():
     """Toggle to search window"""
     global search_results
+    # clears listbox of all previous search results
+    search_results = []
+    result_box.delete(0, END)
+    result_box.grid_forget()
     edit_window()
     window_heading.set('Search for a question, choice, or feedback')
     question_text.set('')
@@ -190,7 +194,8 @@ def search_window():
     correct_choice_label.grid_forget()
     correct_choice_entry.grid_forget()
     lstbx.grid_forget()
-    save_button.config(command=search)
+    save_button.config(command=search, text='Enter')
+    cancel_button.config(command=search_window)
 
 
 def search():
@@ -198,6 +203,9 @@ def search():
     global question_details, search_list, search_results
     search_list = []
     search_results = []
+    # Clears search box and results box
+    cancel_button.config(command=search_window)
+
     for q in question_details:
         search_list.append(q.new_question.casefold())
         search_list.append(q.choice1.casefold())
@@ -229,11 +237,10 @@ def search():
         find = i_feedback.get()
         search_results = get_close_matches(find, search_list, n=3, cutoff=0.5)
 
+    result_box.grid(row=13, column=1, columnspan=3, pady=5, sticky=W, ipadx=30)
     for result in search_results:
         result_box.insert(END, result)
     lstbx_label.config(text='Results')
-    result_box.grid(row=13, column=1, columnspan=3, pady=5, sticky=W, ipadx=30)
-    search_results = []
 
 
 def take_quiz():
@@ -243,7 +250,7 @@ def take_quiz():
     total_points = 0
     quiz_question_count = 0
     window_heading.set('Quiz')
-    win.geometry('700x400')
+    win.geometry('800x600')
     c_choice.set('')
     user_answer.set('')
     pb['value'] = 0
@@ -254,10 +261,12 @@ def take_quiz():
     cancel_button.grid_forget()
     lstbx.grid_forget()
     lstbx_label.grid_forget()
+    result_box.grid_forget()
     user_choice_entry.grid(row=8, column=1, ipadx=entry_padding, pady=10)
     pb.grid(row=12, column=1, ipadx=30, pady=30)
+    save_button.grid(row=11, column=1, pady=8, ipadx=30)
     save_button.config(command=check_answer, text='Submit')
-    take_quiz_button.config(command=next_question, text='Next')
+    take_quiz_button.grid_forget()
 
     quiz_questions = random.sample(question_details, k=3)
     question_text.set(quiz_questions[0].new_question)
@@ -267,8 +276,10 @@ def take_quiz():
     choice_3.set(quiz_questions[0].choice3)
     choice_4.set(quiz_questions[0].choice4)
     c_feedback.set(quiz_questions[0].correct_feedback)
-    i_feedback.set(quiz_questions[0].incorrect_feedback)
-    c_choice.set(quiz_questions[0].correct_answer)
+    feedback = quiz_questions[0].incorrect_feedback
+    answer = quiz_questions[0].correct_answer
+    i_feedback.set(f'{feedback}. The correct answer is {answer}')
+    c_choice.set(answer)
     quiz_question_count += 1
     total_points = int(quiz_questions[0].points)
 
@@ -305,18 +316,25 @@ def check_answer():
             take_quiz_button.config(state=DISABLED)
             messagebox.showinfo(title="You made it!", message=f"You scored {player_score}/{total_points} points.\nTo play again, click 'File' then 'New Game'")
 
+        total_points_label.config(text=f'Current Score: {player_score}/{total_points} points')
+        total_points_label.grid(row=13, column=1, ipadx=30)
+        save_button.grid_forget()
+        take_quiz_button.grid(row=11, column=1, ipadx=15, sticky=E)
+        take_quiz_button.config(command=next_question, text='Next')
         pb['value'] += 100
 
 
 def next_question():
     """Move to the next question"""
-    global quiz_question_count, quiz_questions, total_points
+    global quiz_question_count, quiz_questions, total_points, player_score
     correct_label.grid_forget()
     correct_entry.grid_forget()
     incorrect_label.grid_forget()
     incorrect_entry.grid_forget()
     user_answer.set('')
-
+    save_button.grid(row=11, column=1, pady=8, ipadx=30)
+    save_button.config(command=check_answer, text='Submit')
+    
     if quiz_question_count == 1:
         question_text.set(quiz_questions[1].new_question)
         pts.set(quiz_questions[1].points)
@@ -325,8 +343,10 @@ def next_question():
         choice_3.set(quiz_questions[1].choice3)
         choice_4.set(quiz_questions[1].choice4)
         c_feedback.set(quiz_questions[1].correct_feedback)
-        i_feedback.set(quiz_questions[1].incorrect_feedback)
-        c_choice.set(quiz_questions[1].correct_answer)
+        feedback = quiz_questions[1].incorrect_feedback
+        answer = quiz_questions[1].correct_answer
+        i_feedback.set(f'{feedback}. The correct answer is {answer}')
+        c_choice.set(answer)
         quiz_question_count += 1
         total_points += int(quiz_questions[1].points)
     elif quiz_question_count == 2:
@@ -337,8 +357,10 @@ def next_question():
         choice_3.set(quiz_questions[2].choice3)
         choice_4.set(quiz_questions[2].choice4)
         c_feedback.set(quiz_questions[2].correct_feedback)
-        i_feedback.set(quiz_questions[2].incorrect_feedback)
-        c_choice.set(quiz_questions[2].correct_answer)
+        feedback = quiz_questions[2].incorrect_feedback
+        answer = quiz_questions[2].correct_answer
+        i_feedback.set(f'{feedback}. The correct answer is {answer}')
+        c_choice.set(answer)
         quiz_question_count += 1
         total_points += int(quiz_questions[2].points)
 
@@ -369,7 +391,6 @@ def edit_window():
     choice4_entry.config(state=NORMAL)
     correct_entry.config(state=NORMAL)
     incorrect_entry.config(state=NORMAL)
-    # correct_choice_entry.config(state=NORMAL)
 
     user_choice_entry.grid_forget()
     correct_choice_label.grid(row=8, column=0, ipadx=10)
@@ -381,11 +402,11 @@ def edit_window():
 
     cancel_button.grid(row=11, column=1, ipadx=20, pady=10, sticky=W)
     save_button.grid(row=11, column=1, pady=8, ipadx=30)
-    save_button.config(command=save_question)
-    take_quiz_button.config(text='Take Quiz')
-    take_quiz_button.config(command=take_quiz)
+    save_button.config(state=NORMAL, text='Save', command=save_question)
+    take_quiz_button.config(state=NORMAL, text='Take Quiz', command=take_quiz)
     take_quiz_button.grid(row=11, column=1, ipadx=15, sticky=E)
 
+    result_box.grid_forget()
     lstbx_label.grid(row=12, column=1, sticky=W)
     lstbx.grid(row=13, column=1, columnspan=3, pady=5, sticky=W, ipadx=30)
 
@@ -396,6 +417,21 @@ def insert_lstbx():
         question = str(question)
         lstbx.insert(END, question)
 
+def load_file(file):
+    """Loads the default question into the game"""
+    for question in file:
+        # Comma split separates each part of a question and assigns it to temporary variable
+        try:
+            (temp_q, temp_1, temp_2, temp_3, temp_4, temp_cfeedback, temp_ifeedback, temp_answer, temp_pts) = question.split(',')
+        except TypeError:
+            messagebox.showerror(title='Invalid Input', message='Please enter all required data')
+        else:
+            # Add each question to the list of questions to be displayed to the user
+            question_list.append(temp_q)
+            question_item = Question(temp_q, temp_1, temp_2, temp_3, temp_4, temp_cfeedback, temp_ifeedback, temp_answer,
+                                     temp_pts)
+            question_details.append(question_item)
+    insert_lstbx()
 
 # Build window called win
 win = Tk()
@@ -442,7 +478,7 @@ edit_menu.add_command(label='Search', command=search_window)
 
 file_menu = Menu(menu_bar, tearoff=False)
 file_menu.add_command(label='New Game', command=take_quiz)
-file_menu.add_command(label='Exit Application')
+file_menu.add_command(label='Exit Application', command=win.quit)
 
 menu_bar.add_cascade(label='File', menu=file_menu)
 menu_bar.add_cascade(label='Edit', menu=edit_menu)
@@ -501,6 +537,9 @@ incorrect_label.grid(row=10, column=0, ipadx=10)
 incorrect_entry = Entry(win, textvariable=i_feedback)
 incorrect_entry.grid(row=10, column=1, ipadx=entry_padding)
 
+total_points_label = Label(win, text=f'Current Score: {player_score}/{total_points} points', bg=color, font='bold')
+total_points_label.grid(row=13, column=1, ipadx=30)
+total_points_label.grid_forget()
 
 # Listbox
 lstbx = Listbox(win, width=60)
@@ -531,19 +570,10 @@ pb = ttk.Progressbar(win, orient='horizontal', maximum=301, mode='determinate')
 pb.grid(row=12, column=1, ipadx=30)
 pb.grid_forget()
 
-question_pool = get_questions('question_pool.txt')
-for q in question_pool:
-    # Comma split separates each part of a question and assigns it to temporary variable
-    try:
-        (temp_q, temp_1, temp_2, temp_3, temp_4, temp_cfeedback, temp_ifeedback, temp_answer, temp_pts) = q.split(',')
-    except TypeError:
-        messagebox.showerror(title='Invalid Input', message='Please enter all required data')
-    else:
-        # Add each question to the list of questions to be displayed to the user
-        question_list.append(temp_q)
-        question_item = Question(temp_q, temp_1, temp_2, temp_3, temp_4, temp_cfeedback, temp_ifeedback, temp_answer,
-                                 temp_pts)
-        question_details.append(question_item)
 
-insert_lstbx()
+# Main logic
+
+question_pool = get_questions('question_pool.txt')
+load_file(question_pool)
+
 win.mainloop()
